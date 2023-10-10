@@ -86,20 +86,8 @@ function M.setup()
 
 end
 
-function M.get_launch_args()
-   local data = internals.load_from_json("debug")
-   if not data then
-      return nil
-   end
-   local entry = data[vim.loop.cwd()]
-   if entry then
-      return entry.args
-   end
-   return nil
-end
-
 function M.set_launch_args()
-   require("dap").configurations[vim.bo.filetype][1].args = M.get_launch_args()
+   require("dap").configurations[vim.bo.filetype][1].args = internals.load_from_json_file("args")
    -- TODO: Remove debug statement
    P(require("dap").configurations[vim.bo.filetype][1].args)
 end
