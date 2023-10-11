@@ -8,8 +8,12 @@ local function get_dir_key()
    return vim.loop.cwd()
 end
 
+-- Saves data to json file
+--
+-- @param filename: string (path to file)
+-- @param args: table (data to be stored in the json)
+-- @return boolean
 local function save_to_json(filename, args)
-   print("Saving to " .. filename)
    local f = io.open(filename, "w")
    if not f then
       return false
@@ -20,6 +24,14 @@ local function save_to_json(filename, args)
    return true
 end
 
+-- Loads data from json file and executes action on it
+--
+-- @param filename: string (path to file)
+-- @param name_data: string (name of the data entry to be stored in the json)
+-- @param action: function (function to be executed on the data entry)
+   -- @return boolean, table (boolean: whether the data was modified; table: the modified data)
+-- @param key: string (main key to store this data under; default: current directory)
+-- @return table
 local function load_entry_from_file_and(filename, name_data, action, key)
    local f = io.open(filename, "r")
    local data = {}
@@ -47,6 +59,12 @@ local function load_entry_from_file_and(filename, name_data, action, key)
    return entry[name_data]
 end
 
+-- Updates data in json file
+--
+-- @param name_data: string (name of the data entry to be stored in the json)
+-- @param data: table (data to be stored under the entry)
+-- @param key: string (main key to store this data under; default: current directory)
+-- @return boolean
 function M.update_json_file(name_data, data, key)
    local target_file = get_config_path() .. "dap-helper.json"
 
@@ -55,6 +73,11 @@ function M.update_json_file(name_data, data, key)
    end, key)
 end
 
+-- Loads data from json file
+--
+-- @param name_data: string (name of the data entry stored in the json)
+-- @param key: string (main key to store this data under; default: current directory)
+-- @return table
 function M.load_from_json_file(name_data, key)
    local target_file = get_config_path() .. "dap-helper.json"
 
@@ -63,6 +86,11 @@ function M.load_from_json_file(name_data, key)
    end, key)
 end
 
+-- Compares two arrays of arguments
+--
+-- @param args1: table (array of arguments)
+-- @param args2: table (array of arguments)
+-- @return boolean
 function M.compare_args(args1, args2)
    if not args1 or not args2 then
       return false
