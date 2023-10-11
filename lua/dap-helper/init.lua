@@ -14,7 +14,7 @@ local daic0r_dap_helper = vim.api.nvim_create_augroup("DAIC0R_DAP_HELPER", {
 function M.setup()
    vim.api.nvim_create_user_command("DapHelperSetLaunchArgs", function(_arg)
       local entry = internals.load_from_json_file("args")
-      local opts = { prompt = "Enter launch arguments: " }
+      local opts = { prompt = "Launch arguments: " }
       -- Check if file exists and data could be loaded
       -- If not, create default entry for this directory
       -- TODO: Always use base directory of current project, not cwd
@@ -24,19 +24,23 @@ function M.setup()
          opts.default = table.concat(entry, " ")
       end
       -- Ask use to input arguments
-      local new_args = vim.fn.input(opts)
-      -- Now do the reverse of the above, and split the input into an array
-      local arg_array = {}
-      for arg in string.gmatch(new_args, "%S+") do
-         table.insert(arg_array, arg)
-      end
-      -- If the entry does not exist, or the arguments have changed, save the
-      -- new arguments
-      if not entry or not internals.compare_args(arg_array, entry) then
-         if not internals.update_json_file("args", arg_array) then
-            print("Saving failed")
+      vim.ui.input(opts, function(new_args)
+         if not new_args then
+            return
          end
-      end
+         -- Now do the reverse of the above, and split the input into an array
+         local arg_array = {}
+         for arg in string.gmatch(new_args, "%S+") do
+            table.insert(arg_array, arg)
+         end
+         -- If the entry does not exist, or the arguments have changed, save the
+         -- new arguments
+         if not entry or not internals.compare_args(arg_array, entry) then
+            if not internals.update_json_file("args", arg_array) then
+               vim.notify("Saving failed", vim.log.levels.WARN)
+            end
+         end
+      end)
    end, {})
 
    vim.api.nvim_create_autocmd("BufWritePost", {
