@@ -86,6 +86,57 @@ function M.load_from_json_file(name_data, key)
    end, key)
 end
 
+function M.save_watches()
+   local dapui = require("dapui"); 
+
+   local curbuf = vim.api.nvim_get_current_buf()
+   local filename = vim.api.nvim_buf_get_name(curbuf)
+
+   M.update_json_file("watches", dapui.elements.watches.get(), filename)
+end
+
+function M.load_watches()
+   local dapui = require("dapui")
+
+   local curbuf = vim.api.nvim_get_current_buf()
+   local filename = vim.api.nvim_buf_get_name(curbuf)
+   local entry = M.load_from_json_file("watches", filename)
+   
+   for _, watch in ipairs(entry) do
+      dapui.elements.watches.add(watch.expression)
+   end
+end
+
+function M.save_breakpoints()
+   local bps = require("dap.breakpoints");
+   assert(bps, "dap.breakpoints not loaded")
+
+   local curbuf = vim.api.nvim_get_current_buf()
+
+   local bufbps = bps.get(curbuf)
+   local _,bpsextracted = pairs(bufbps)(bufbps)
+   if #bpsextracted == 0 then
+      return
+   end
+
+   local filename = vim.api.nvim_buf_get_name(curbuf)
+   M.update_json_file("breakpoints", bpsextracted, filename)
+end
+
+function M.load_breakpoints()
+   local bps = require("dap.breakpoints");
+   assert(bps, "dap.breakpoints not loaded")
+
+   local curbuf = vim.api.nvim_get_current_buf()
+
+   local entry = M.load_from_json_file("breakpoints", vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()))
+   if entry and #entry > 0 then
+      for _,bp in ipairs(entry) do
+         bps.set(bp, curbuf, bp.line)
+      end
+   end
+end
+
 -- Compares two arrays of arguments
 --
 -- @param args1: table (array of arguments)

@@ -11,57 +11,6 @@ local daic0r_dap_helper = vim.api.nvim_create_augroup("DAIC0R_DAP_HELPER", {
    clear = true
 })
 
-local function save_watches()
-   local dapui = require("dapui"); 
-
-   local curbuf = vim.api.nvim_get_current_buf()
-   local filename = vim.api.nvim_buf_get_name(curbuf)
-
-   internals.update_json_file("watches", dapui.elements.watches.get(), filename)
-end
-
-local function load_watches()
-   local dapui = require("dapui")
-
-   local curbuf = vim.api.nvim_get_current_buf()
-   local filename = vim.api.nvim_buf_get_name(curbuf)
-   local entry = internals.load_from_json_file("watches", filename)
-   
-   for _, watch in ipairs(entry) do
-      dapui.elements.watches.add(watch.expression)
-   end
-end
-
-local function save_breakpoints()
-   local bps = require("dap.breakpoints");
-   assert(bps, "dap.breakpoints not loaded")
-
-   local curbuf = vim.api.nvim_get_current_buf()
-
-   local bufbps = bps.get(curbuf)
-   local _,bpsextracted = pairs(bufbps)(bufbps)
-   if #bpsextracted == 0 then
-      return
-   end
-
-   local filename = vim.api.nvim_buf_get_name(curbuf)
-   internals.update_json_file("breakpoints", bpsextracted, filename)
-end
-
-local function load_breakpoints()
-   local bps = require("dap.breakpoints");
-   assert(bps, "dap.breakpoints not loaded")
-
-   local curbuf = vim.api.nvim_get_current_buf()
-
-   local entry = internals.load_from_json_file("breakpoints", vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()))
-   if entry and #entry > 0 then
-      for _,bp in ipairs(entry) do
-         bps.set(bp, curbuf, bp.line)
-      end
-   end
-end
-
 function M.setup()
    vim.api.nvim_create_user_command("DapHelperSetLaunchArgs", function(_arg)
       local entry = internals.load_from_json_file("args")
@@ -93,16 +42,16 @@ function M.setup()
    vim.api.nvim_create_autocmd("BufWritePost", {
       pattern = {"*.h", ".c", ".cpp", "*.rs" },
       callback = function(opts)
-         save_breakpoints()
-         save_watches()
+         internals.save_breakpoints()
+         internals.save_watches()
       end,
       group = daic0r_dap_helper
    })
    vim.api.nvim_create_autocmd("BufReadPost", {
       pattern = {"*.h", ".c", ".cpp", "*.rs" },
       callback = function(opts)
-         load_breakpoints()
-         load_watches()
+         internals.load_breakpoints()
+         internals.load_watches()
       end,
       group = daic0r_dap_helper
    })
@@ -115,8 +64,6 @@ end
 
 function M.set_launch_args()
    require("dap").configurations[vim.bo.filetype][1].args = M.get_launch_args()
-   -- TODO: Remove debug statement
-   P(require("dap").configurations[vim.bo.filetype][1].args)
 end
 
 return M
