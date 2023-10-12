@@ -1,11 +1,12 @@
 # dap-helper
-Neovim Plugin that provides some convenience functions for nicer debugging
+Neovim Plugin that provides some convenience functions for nicer debugging.
 
 ## Installation
 ### lazy.nvim
 ```lua
 {
   'daic0r/dap-helper.nvim',
+  dependencies = { "rcarriga/nvim-dap-ui", "mfussenegger/nvim-dap" },
   config = function()
     require("dap-helper").setup()
   end
