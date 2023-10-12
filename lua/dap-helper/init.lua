@@ -43,17 +43,30 @@ function M.setup()
       end)
    end, {})
 
-   vim.api.nvim_create_autocmd("BufWritePost", {
-      pattern = {"*.h", ".c", ".cpp", "*.rs" },
+   vim.api.nvim_create_autocmd("BufUnload", {
+      pattern = "*",
       callback = function(opts)
-         internals.save_breakpoints()
+         local filename = vim.api.nvim_buf_get_name(opts.buf)
+         if #filename == 0 or not vim.fn.filereadable(filename) then
+            return
+         end
          internals.save_watches()
+         if vim.api.nvim_buf_get_option(opts.buf, "modified") then
+            return
+         end
+         -- Only save breakpoints if buffer is unmodified to make sure we save no
+         -- breakpoints that reference non-existing lines
+         internals.save_breakpoints()
       end,
       group = daic0r_dap_helper
    })
-   vim.api.nvim_create_autocmd("BufReadPost", {
-      pattern = {"*.h", ".c", ".cpp", "*.rs" },
+   vim.api.nvim_create_autocmd("BufReadPost", { 
+      pattern = "*",
       callback = function(opts)
+         local filename = vim.api.nvim_buf_get_name(opts.buf)
+         if #filename == 0 or not vim.fn.filereadable(filename) then
+            return
+         end
          internals.load_breakpoints()
          internals.load_watches()
       end,

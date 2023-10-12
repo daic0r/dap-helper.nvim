@@ -101,7 +101,7 @@ function M.load_watches()
    local curbuf = vim.api.nvim_get_current_buf()
    local filename = vim.api.nvim_buf_get_name(curbuf)
    local entry = M.load_from_json_file("watches", filename)
-   
+
    for _, watch in ipairs(entry) do
       dapui.elements.watches.add(watch.expression)
    end
@@ -114,10 +114,8 @@ function M.save_breakpoints()
    local curbuf = vim.api.nvim_get_current_buf()
 
    local bufbps = bps.get(curbuf)
-   local _,bpsextracted = pairs(bufbps)(bufbps)
-   if #bpsextracted == 0 then
-      return
-   end
+   --local _,bpsextracted = pairs(bufbps)(bufbps)
+   local bpsextracted = bufbps[curbuf]
 
    local filename = vim.api.nvim_buf_get_name(curbuf)
    M.update_json_file("breakpoints", bpsextracted, filename)
