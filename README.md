@@ -1,5 +1,8 @@
 # dap-helper
-Neovim Plugin that provides some convenience functions for nicer debugging.
+Neovim Plugin that provides some convenience functions for nicer debugging, such as:
+
+- Easy modification of command line arguments passed to the debuggee
+- Saving/restoring of breakpoints and watches
 
 ## Installation
 ### lazy.nvim
