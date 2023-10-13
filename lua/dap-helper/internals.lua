@@ -87,7 +87,7 @@ function M.load_from_json_file(name_data, key)
 end
 
 function M.save_watches()
-   local dapui = require("dapui"); 
+   local dapui = require("dapui")
 
    local curbuf = vim.api.nvim_get_current_buf()
    local filename = vim.api.nvim_buf_get_name(curbuf)
