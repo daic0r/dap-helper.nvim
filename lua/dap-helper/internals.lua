@@ -1,11 +1,17 @@
 local M = {}
 
 local function get_config_path()
-   return vim.fn.stdpath("data") .. "/"
+   return vim.fn.stdpath("data")
 end
 
 local function get_dir_key()
-   return vim.loop.cwd()
+   -- None found? Use current directory as key
+   local git_dir = M.get_git_dir()
+   if not git_dir then
+      return vim.loop.cwd()
+   end
+   -- Return base path (with the .git stripped off)
+   return vim.fs.dirname(git_dir)
 end
 
 -- Saves data to json file
@@ -29,7 +35,7 @@ end
 -- @param filename: string (path to file)
 -- @param name_data: string (name of the data entry to be stored in the json)
 -- @param action: function (function to be executed on the data entry)
-   -- @return boolean, table (boolean: whether the data was modified; table: the modified data)
+-- @return boolean, table (boolean: whether the data was modified; table: the modified data)
 -- @param key: string (main key to store this data under; default: current directory)
 -- @return table
 local function load_entry_from_file_and(filename, name_data, action, key)
@@ -66,7 +72,7 @@ end
 -- @param key: string (main key to store this data under; default: current directory)
 -- @return boolean
 function M.update_json_file(name_data, data, key)
-   local target_file = get_config_path() .. "dap-helper.json"
+   local target_file = vim.fs.joinpath(get_config_path(), "dap-helper.json")
 
    return load_entry_from_file_and(target_file, name_data, function(entry)
       return true, data
@@ -79,7 +85,7 @@ end
 -- @param key: string (main key to store this data under; default: current directory)
 -- @return table
 function M.load_from_json_file(name_data, key)
-   local target_file = get_config_path() .. "dap-helper.json"
+   local target_file = vim.fs.joinpath(get_config_path(),  "dap-helper.json")
 
    return load_entry_from_file_and(target_file, name_data, function(entry)
       return false
@@ -102,6 +108,11 @@ function M.load_watches()
    local filename = vim.api.nvim_buf_get_name(curbuf)
    local entry = M.load_from_json_file("watches", filename)
 
+   -- remove present watches -> we want only watches pertinent to the file
+   local watches = dapui.elements.watches.get()
+   while #watches > 0 do
+      table.remove(watches, 1)
+   end
    for _, watch in ipairs(entry) do
       dapui.elements.watches.add(watch.expression)
    end
@@ -109,7 +120,6 @@ end
 
 function M.save_breakpoints()
    local bps = require("dap.breakpoints");
-   assert(bps, "dap.breakpoints not loaded")
 
    local curbuf = vim.api.nvim_get_current_buf()
 
@@ -123,13 +133,12 @@ end
 
 function M.load_breakpoints()
    local bps = require("dap.breakpoints");
-   assert(bps, "dap.breakpoints not loaded")
 
    local curbuf = vim.api.nvim_get_current_buf()
 
    local entry = M.load_from_json_file("breakpoints", vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()))
    if entry then
-      for _,bp in ipairs(entry) do
+      for _, bp in ipairs(entry) do
          bps.set(bp, curbuf, bp.line)
       end
    end
@@ -153,6 +162,25 @@ function M.compare_args(args1, args2)
       end
    end
    return true
+end
+
+function M.is_invalid_filename(filename)
+   return #filename == 0 or not vim.loop.fs_stat(filename) or string.find(filename, "^term:")
+end
+
+function M.get_git_dir()
+   -- Try to find base folder that contains the .git files
+   local path = vim.fs.find(".git", {
+      upward = true,
+      stop = vim.uv.os_homedir(),
+      path = vim.fs.dirname(vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()))
+   })
+   return path[1] or {}
+end
+
+-- Parent dir of the .git dir
+function M.get_base_dir()
+   return vim.fs.dirname(M.get_git_dir())
 end
 
 return M

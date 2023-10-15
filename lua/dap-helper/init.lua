@@ -11,6 +11,8 @@ local daic0r_dap_helper = vim.api.nvim_create_augroup("DAIC0R_DAP_HELPER", {
    clear = true
 })
 
+local dap = require("dap")
+
 function M.setup()
    vim.api.nvim_create_user_command("DapHelperSetLaunchArgs", function(_arg)
       local entry = internals.load_from_json_file("args")
@@ -47,7 +49,7 @@ function M.setup()
       pattern = "*",
       callback = function(opts)
          local filename = vim.api.nvim_buf_get_name(opts.buf)
-         if #filename == 0 or not vim.fn.filereadable(filename) then
+         if internals.is_invalid_filename(filename) then
             return
          end
          internals.save_watches()
@@ -60,11 +62,11 @@ function M.setup()
       end,
       group = daic0r_dap_helper
    })
-   vim.api.nvim_create_autocmd("BufReadPost", { 
+   vim.api.nvim_create_autocmd("BufReadPost", {
       pattern = "*",
       callback = function(opts)
          local filename = vim.api.nvim_buf_get_name(opts.buf)
-         if #filename == 0 or not vim.fn.filereadable(filename) then
+         if internals.is_invalid_filename(filename) then
             return
          end
          internals.load_breakpoints()
@@ -72,15 +74,31 @@ function M.setup()
       end,
       group = daic0r_dap_helper
    })
-
 end
 
 function M.get_launch_args()
    return internals.load_from_json_file("args")
 end
 
-function M.set_launch_args()
-   require("dap").configurations[vim.bo.filetype][1].args = M.get_launch_args()
+function M.set_launch_args(args)
+   dap.configurations[vim.bo.filetype][1].args = args
+end
+
+function M.get_startup_program()
+   if vim.bo.filetype == "rust" then
+      local base_dir = internals.get_base_dir()
+      assert(base_dir, "This shouldn't be nil")
+      local proj_name = vim.fs.basename(base_dir)
+      return vim.fs.joinpath(base_dir, "target/debug", proj_name)
+   end
+   return nil
+end
+
+function M.set_startup_program(filepath)
+   if not filepath then
+      return
+   end
+   dap.configurations[vim.bo.filetype][1].program = filepath
 end
 
 return M
