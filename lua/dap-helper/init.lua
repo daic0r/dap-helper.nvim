@@ -41,8 +41,16 @@ function M.setup()
             if not internals.update_json_file("args", arg_array) then
                vim.notify("Saving failed", vim.log.levels.WARN)
             end
+            M.set_launch_args(arg_array)
          end
       end)
+   end, {})
+
+   vim.api.nvim_create_user_command("DapHelperReset", function(_arg)
+      local succ, str = os.remove(internals.get_config_file())
+      if not succ then
+         vim.notify("Error resetting the configuration: " .. str, vim.log.levels.ERROR)
+      end
    end, {})
 
    vim.api.nvim_create_autocmd("BufUnload", {
@@ -69,6 +77,7 @@ function M.setup()
          if internals.is_invalid_filename(filename) then
             return
          end
+         M.set_launch_args(M.get_launch_args())
          internals.load_breakpoints()
          internals.load_watches()
       end,
@@ -81,7 +90,10 @@ function M.get_launch_args()
 end
 
 function M.set_launch_args(args)
-   dap.configurations[vim.bo.filetype][1].args = args
+   local configs = dap.configurations[vim.bo.filetype]
+   if configs then
+      configs[1].args = args
+   end
 end
 
 function M.get_startup_program()

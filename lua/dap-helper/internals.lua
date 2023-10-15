@@ -14,6 +14,10 @@ local function get_dir_key()
    return vim.fs.dirname(git_dir)
 end
 
+function M.get_config_file()
+   return vim.fs.joinpath(get_config_path(), "dap-helper.json")
+end
+
 -- Saves data to json file
 --
 -- @param filename: string (path to file)
@@ -72,9 +76,7 @@ end
 -- @param key: string (main key to store this data under; default: current directory)
 -- @return boolean
 function M.update_json_file(name_data, data, key)
-   local target_file = vim.fs.joinpath(get_config_path(), "dap-helper.json")
-
-   return load_entry_from_file_and(target_file, name_data, function(entry)
+   return load_entry_from_file_and(M.get_config_file(), name_data, function(entry)
       return true, data
    end, key)
 end
@@ -85,9 +87,7 @@ end
 -- @param key: string (main key to store this data under; default: current directory)
 -- @return table
 function M.load_from_json_file(name_data, key)
-   local target_file = vim.fs.joinpath(get_config_path(),  "dap-helper.json")
-
-   return load_entry_from_file_and(target_file, name_data, function(entry)
+   return load_entry_from_file_and(M.get_config_file(), name_data, function(entry)
       return false
    end, key)
 end
