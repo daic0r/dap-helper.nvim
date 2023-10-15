@@ -1,7 +1,7 @@
-function reload()
-   package.loaded["dap-helper"] = nil
-   require("dap-helper").setup()
-end
+--function reload()
+--   package.loaded["dap-helper"] = nil
+--   require("dap-helper").setup()
+--end
 
 local internals = require("dap-helper.internals")
 

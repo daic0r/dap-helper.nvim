@@ -128,7 +128,7 @@ function M.load_breakpoints()
    local curbuf = vim.api.nvim_get_current_buf()
 
    local entry = M.load_from_json_file("breakpoints", vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()))
-   if entry and #entry > 0 then
+   if entry then
       for _,bp in ipairs(entry) do
          bps.set(bp, curbuf, bp.line)
       end
