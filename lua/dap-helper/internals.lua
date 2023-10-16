@@ -40,7 +40,8 @@ end
 -- @param name_data: string (name of the data entry to be stored in the json)
 -- @param action: function (function to be executed on the data entry)
 -- @return boolean, table (boolean: whether the data was modified; table: the modified data)
--- @param key: string (main key to store this data under; default: current directory)
+-- @param key: string (main key to store this data under; default: .git dir location
+-- /current directory)
 -- @return table
 local function load_entry_from_file_and(filename, name_data, action, key)
    local f = io.open(filename, "r")
@@ -73,7 +74,8 @@ end
 --
 -- @param name_data: string (name of the data entry to be stored in the json)
 -- @param data: table (data to be stored under the entry)
--- @param key: string (main key to store this data under; default: current directory)
+-- @param key: string (main key to store this data under; default: .git dir location
+-- /current directory)
 -- @return boolean
 function M.update_json_file(name_data, data, key)
    return load_entry_from_file_and(M.get_config_file(), name_data, function(entry)
@@ -84,7 +86,8 @@ end
 -- Loads data from json file
 --
 -- @param name_data: string (name of the data entry stored in the json)
--- @param key: string (main key to store this data under; default: current directory)
+-- @param key: string (main key to store this data under; default: .git dir location
+-- /current directory)
 -- @return table
 function M.load_from_json_file(name_data, key)
    return load_entry_from_file_and(M.get_config_file(), name_data, function(entry)
@@ -164,8 +167,17 @@ function M.compare_args(args1, args2)
    return true
 end
 
-function M.is_invalid_filename(filename)
-   return #filename == 0 or not vim.loop.fs_stat(filename) or string.find(filename, "^term:")
+function M.is_invalid_filename(bufnr)
+   local filename = vim.api.nvim_buf_get_name(bufnr)
+   return #filename == 0
+      or string.find(filename, "^term:")
+      or M.get_filetype() == "help"
+      or M.get_filetype() == "gitcommit"
+      or not vim.loop.fs_stat(filename)
+end
+
+function M.get_filetype(bufnr)
+   return vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 end
 
 function M.get_git_dir()
@@ -175,7 +187,7 @@ function M.get_git_dir()
       stop = vim.uv.os_homedir(),
       path = vim.fs.dirname(vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()))
    })
-   return path[1] or {}
+   return path[1]
 end
 
 -- Parent dir of the .git dir

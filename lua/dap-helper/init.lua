@@ -41,7 +41,7 @@ function M.setup()
             if not internals.update_json_file("args", arg_array) then
                vim.notify("Saving failed", vim.log.levels.WARN)
             end
-            M.set_launch_args(arg_array)
+            M.set_launch_args(internals.get_filetype(opts.buf), arg_array)
          end
       end)
    end, {})
@@ -56,12 +56,11 @@ function M.setup()
    vim.api.nvim_create_autocmd("BufUnload", {
       pattern = "*",
       callback = function(opts)
-         local filename = vim.api.nvim_buf_get_name(opts.buf)
-         if internals.is_invalid_filename(filename) then
+         if internals.is_invalid_filename(opts.buf) then
             return
          end
          internals.save_watches()
-         if vim.api.nvim_buf_get_option(opts.buf, "modified") then
+         if vim.api.nvim_get_option_value("modified", { buf = opts.buf }) then
             return
          end
          -- Only save breakpoints if buffer is unmodified to make sure we save no
@@ -73,11 +72,10 @@ function M.setup()
    vim.api.nvim_create_autocmd("BufReadPost", {
       pattern = "*",
       callback = function(opts)
-         local filename = vim.api.nvim_buf_get_name(opts.buf)
-         if internals.is_invalid_filename(filename) then
+         if internals.is_invalid_filename(opts.buf) then
             return
          end
-         M.set_launch_args(M.get_launch_args())
+         M.set_launch_args(internals.get_filetype(opts.buf), M.get_launch_args())
          internals.load_breakpoints()
          internals.load_watches()
       end,
@@ -89,15 +87,15 @@ function M.get_launch_args()
    return internals.load_from_json_file("args")
 end
 
-function M.set_launch_args(args)
-   local configs = dap.configurations[vim.bo.filetype]
+function M.set_launch_args(filetype, args)
+   local configs = dap.configurations[filetype]
    if configs then
       configs[1].args = args
    end
 end
 
-function M.get_startup_program()
-   if vim.bo.filetype == "rust" then
+function M.get_startup_program(filetype)
+   if filetype == "rust" then
       local base_dir = internals.get_base_dir()
       assert(base_dir, "This shouldn't be nil")
       local proj_name = vim.fs.basename(base_dir)
@@ -106,11 +104,11 @@ function M.get_startup_program()
    return nil
 end
 
-function M.set_startup_program(filepath)
+function M.set_startup_program(filetype, filepath)
    if not filepath then
       return
    end
-   dap.configurations[vim.bo.filetype][1].program = filepath
+   dap.configurations[filetype][1].program = filepath
 end
 
 return M
