@@ -46,6 +46,27 @@ function M.setup()
       end)
    end, {})
 
+   vim.api.nvim_create_user_command("DapHelperSetBuildCommand", function(_arg)
+      local entry = internals.load_from_json_file("buildCmd")
+      local opts = { prompt = "Build command: " }
+      if type(entry) == "string" then
+         opts.default = entry
+      else
+         entry = ""
+      end
+      -- Ask use to input arguments
+      vim.ui.input(opts, function(new_cmd)
+         if not new_cmd then
+            return
+         end
+         if new_cmd ~= entry then
+            if not internals.update_json_file("buildCmd", new_cmd) then
+               vim.notify("Saving failed", vim.log.levels.WARN)
+            end
+         end
+      end)
+   end, {})
+
    vim.api.nvim_create_user_command("DapHelperReset", function(_arg)
       local succ, str = os.remove(internals.get_config_file())
       if not succ then
@@ -96,7 +117,7 @@ end
 
 function M.get_startup_program(filetype)
    if filetype == "rust" then
-      local base_dir = internals.get_base_dir()
+      local base_dir = internals.get_base_dir(vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()))
       assert(base_dir, "This shouldn't be nil")
       local proj_name = vim.fs.basename(base_dir)
       return vim.fs.joinpath(base_dir, "target/debug", proj_name)
@@ -109,6 +130,10 @@ function M.set_startup_program(filetype, filepath)
       return
    end
    dap.configurations[filetype][1].program = filepath
+end
+
+function M.get_build_cmd()
+   return internals.load_from_json_file("buildCmd")
 end
 
 return M
