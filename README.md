@@ -32,7 +32,7 @@ To edit the build command (command run before starting debugging) run `:DapHelpe
 local dap_helper = require"dap-helper"
 vim.keymap.set("n", "<F5>", function()
    -- Check if debuggger is already running
-   if #dap.status() == 0 then
+   if #dap.status() == 0 and dap_helper.get_build_cmd() then
       local ret = os.execute(dap_helper.get_build_cmd() .. " > /dev/null 2>&1")
       if ret ~= 0 then
          vim.notify("Build failed", vim.log.levels.ERROR)
@@ -42,3 +42,4 @@ vim.keymap.set("n", "<F5>", function()
    dap.continue()
 end)
 ```
+The plugin tries to determine a project's base directory by attempting to locate a `.git` directory. Command line arguments will always be associated with that folder, i.e. if you launch Neovim from a subdirectory of your project, the arguments can still be found. If no `.git`. directory is present, the arguments will be associated with the current working directory.
