@@ -96,7 +96,7 @@ end
 
 function M.get_startup_program(filetype)
    if filetype == "rust" then
-      local base_dir = internals.get_base_dir()
+      local base_dir = internals.get_base_dir(vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()))
       assert(base_dir, "This shouldn't be nil")
       local proj_name = vim.fs.basename(base_dir)
       return vim.fs.joinpath(base_dir, "target/debug", proj_name)
