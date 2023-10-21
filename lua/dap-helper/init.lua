@@ -133,7 +133,11 @@ function M.set_startup_program(filetype, filepath)
 end
 
 function M.get_build_cmd()
-   return internals.load_from_json_file("buildCmd")
+   local buildcmd = internals.load_from_json_file("buildCmd")
+   if type(buildcmd) == "table" then
+      return nil
+   end
+   return buildcmd
 end
 
 return M
