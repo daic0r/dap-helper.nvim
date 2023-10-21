@@ -42,4 +42,3 @@ vim.keymap.set("n", "<F5>", function()
    dap.continue()
 end)
 ```
-The plugin tries to determine a project's base directory by attempting to locate a `.git` directory. Command line arguments will always be associated with that folder, i.e. if you launch Neovim from a subdirectory of your project, the arguments can still be found. If no `.git`. directory is present, the arguments will be associated with the current working directory.
