@@ -173,12 +173,7 @@ function M.compare_args(args1, args2)
 end
 
 function M.is_invalid_filename(bufnr)
-   local filename = vim.api.nvim_buf_get_name(bufnr)
-   return #filename == 0
-      or string.find(filename, "^term:")
-      or M.get_filetype() == "help"
-      or M.get_filetype() == "gitcommit"
-      or not vim.loop.fs_stat(filename)
+   return vim.api.nvim_get_option_value("buftype", { buf = bufnr }) ~= ""
 end
 
 function M.get_filetype(bufnr)
